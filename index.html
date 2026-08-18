@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sınav Sonuç Öğrenme Sistemi</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      min-height: 100vh;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .podium-step {
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .podium-step:hover {
+      transform: translateY(-8px);
+    }
+
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    .animate-pulse-subtle {
+      animation: pulse-subtle 3s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .animate-float {
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="text-slate-100 pb-16">
+
+  <!-- Header Section -->
+  <header class="pt-8 pb-4 text-center px-4">
+    <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full glass-card text-amber-300 font-semibold text-sm mb-4 border border-amber-500/30 shadow-lg">
+      <i class="fa-solid fa-graduation-cap text-lg"></i>
+      <span>İngilizce Revizyon Deneme Sınavları</span>
+    </div>
+    <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-amber-200 via-pink-300 to-purple-300 bg-clip-text text-transparent">
+      Sınav Sonuç Öğrenme Portalı
+    </h1>
+    <p class="text-slate-400 mt-2 text-sm md:text-base max-w-xl mx-auto">
+      Adınızı yazarak sınav sonucunuzu, sınıf derecenizi ve İngilizce dönütünüzü öğrenebilirsiniz.
+    </p>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-4xl mx-auto px-4 mt-4 grid gap-8">
+
+    <!-- Search Form Card -->
+    <div class="glass-card rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+      <!-- Glow effects -->
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="space-y-6 relative z-10">
+        
+        <!-- 1. Select Exam -->
+        <div>
+          <label class="block text-xs md:text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wider">
+            <i class="fa-solid fa-file-signature text-amber-400 mr-2"></i>Sınav Seçimi
+          </label>
+          <select id="examSelect" onchange="resetResultView()" class="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all font-medium text-sm md:text-base cursor-pointer">
+            <option value="exam1">1-5. Üniteler Revizyon Denemesi (18.08.2026)</option>
+            <option value="exam2">6-10. Üniteler Revizyon Denemesi (Yakında)</option>
+            <option value="exam3">1-10. Üniteler Genel Revizyon Denemesi (Yakında)</option>
+          </select>
+        </div>
+
+        <!-- 2. Student Search / Selection -->
+        <div>
+          <label class="block text-xs md:text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wider">
+            <i class="fa-solid fa-user-graduate text-amber-400 mr-2"></i>Öğrenci Adı Soyadı
+          </label>
+          
+          <div class="relative">
+            <input 
+              type="text" 
+              id="studentInput" 
+              placeholder="Örn: Ahmet Demir, Ayşe Kaya" 
+              autocomplete="off"
+              oninput="handleInputChange()"
+              onkeydown="handleKeyDown(event)"
+              class="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 rounded-xl px-4 py-3.5 pl-11 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all font-medium text-sm md:text-base placeholder-slate-500"
+            />
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+            <!-- Autocomplete Suggestions Dropdown -->
+            <div id="suggestionsBox" class="hidden absolute z-30 left-0 right-0 mt-2 bg-slate-900/95 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto divide-y divide-slate-800">
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button 
+            onclick="calculateResult()" 
+            class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-[0.98] flex items-center justify-center gap-2 text-base">
+            <i class="fa-solid fa-square-poll-vertical text-xl"></i>
+            Sonucu Öğren
+          </button>
+
+          <button 
+            onclick="showPodiumDirectly()" 
+            class="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl transition-all border border-slate-700/80 text-sm font-semibold flex items-center justify-center gap-2">
+            <i class="fa-solid fa-trophy text-amber-400"></i>
+            <span>Derece Kürsüsünü Göster</span>
+          </button>
+          
+          <button 
+            onclick="clearSearch()" 
+            title="Temizle"
+            class="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 flex items-center justify-center">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Result Display Card (Initially Hidden) -->
+    <div id="resultCard" class="hidden transition-all duration-500">
+      <!-- Dynamic container inside JS -->
+    </div>
+
+    <!-- Podium & Leaderboard Section (Initially Hidden - Revealed after searching) -->
+    <div id="podiumSection" class="hidden glass-card rounded-3xl p-6 md:p-8 shadow-2xl space-y-8 animate-fade-in-up">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/60 pb-5">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-trophy text-amber-400"></i> Derece Kürsüsü & Şampiyonlar
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1">
+            Sınavda en yüksek puan alarak dereceye giren öğrencilerimiz
+          </p>
+        </div>
+        <button 
+          onclick="toggleFullList()" 
+          id="toggleListBtn"
+          class="inline-flex items-center gap-2 text-xs md:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-amber-300 px-4 py-2.5 rounded-xl border border-amber-500/20 transition-all">
+          <i class="fa-solid fa-list-ol"></i>
+          <span>Tüm Sınıf Listesini Göster</span>
+        </button>
+      </div>
+
+      <!-- Podium Visual Representation -->
+      <div class="pt-6 pb-2">
+        <div id="podiumContainer" class="flex items-end justify-center gap-2 md:gap-6 min-h-[260px] px-2">
+          <!-- Rendered dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Full Leaderboard Table (Collapsible) -->
+      <div id="fullLeaderboard" class="hidden pt-4 border-t border-slate-800 transition-all">
+        <h3 class="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-users text-indigo-400"></i> Tüm Sınıf Sıralaması Listesi
+        </h3>
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs md:text-sm text-slate-300">
+            <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="py-3.5 px-4 font-semibold">Sıra</th>
+                <th class="py-3.5 px-4 font-semibold">Öğrenci Adı</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Puan</th>
+                <th class="py-3.5 px-4 font-semibold text-right">Durum / Derece</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody" class="divide-y divide-slate-800/60 bg-slate-950/40">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="mt-12 text-center text-xs text-slate-500">
+    <p>© 2026 İngilizce Revizyon Deneme Sınavları Portal | Tüm Hakları Saklıdır.</p>
+  </footer>
+
+  <!-- Sound Effects Synthesis using Web Audio API -->
+  <script>
+    function playCelebrationSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (Triumphant Arpeggio)
+        
+        notes.forEach((freq, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + index * 0.12);
+          
+          gain.gain.setValueAtTime(0.001, now + index * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.3, now + index * 0.12 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.12 + 0.5);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start(now + index * 0.12);
+          osc.stop(now + index * 0.12 + 0.55);
+        });
+      } catch (e) {
+        console.log("Audio play blocked or unsupported:", e);
+      }
+    }
+
+    // EXAM DATASETS
+    const EXAMS_DATA = {
+      exam1: {
+        title: "1-5. Üniteler Revizyon Denemesi",
+        date: "18.08.2026",
+        active: true,
+        students: [
+          { name: "Aymira Balıkçı", score: null, status: "GİRMEDİ" },
+          { name: "Berfin Aslan", score: 50, status: "GİRDİ" },
+          { name: "Büşra Senkür", score: 65, status: "GİRDİ" },
+          { name: "Defne Bağlı", score: 35, status: "GİRDİ" },
+          { name: "Duru Bakar", score: null, status: "GİRMEDİ" },
+          { name: "Efe Ali Subaşı", score: 60, status: "GİRDİ" },
+          { name: "Elif Aslan", score: 65, status: "GİRDİ" },
+          { name: "Elizan Kara", score: 90, status: "GİRDİ" },
+          { name: "Emir Ege Atalay", score: 75, status: "GİRDİ" },
+          { name: "Eymen Yusuf Acar", score: 50, status: "GİRDİ" },
+          { name: "Hira Nur Demir", score: 60, status: "GİRDİ" },
+          { name: "İbrahim Ata Kahvecioğlu", score: 90, status: "GİRDİ" },
+          { name: "Kübra Senkür", score: 60, status: "GİRDİ" },
+          { name: "Mehmet Enes Süzük", score: 65, status: "GİRDİ" },
+          { name: "Muhammed Bünyamin Subaşı", score: 95, status: "GİRDİ" },
+          { name: "Muhammed İsa Karaarslan", score: 55, status: "GİRDİ" },
+          { name: "Muhammed Sehab Avcı", score: 60, status: "GİRDİ" },
+          { name: "Ömer Talha Güllü", score: null, status: "GİRMEDİ" },
+          { name: "Recep Talha Yalçın", score: 55, status: "GİRDİ" }, // Doğru puan: 55
+          { name: "Sare Esma Subaşı", score: 75, status: "GİRDİ" },
+          { name: "Sudenaz Koca", score: null, status: "GİRMEDİ" },
+          { name: "Sümeyye Nur Bayındır", score: 30, status: "GİRDİ" },
+          { name: "Şura Senkür", score: 45, status: "GİRDİ" },
+          { name: "Taha Yiğit Polat", score: 60, status: "GİRDİ" },
+          { name: "Ömer Asaf Aksoy", score: 80, status: "GİRDİ" },
+          { name: "Miraç Eren Kara", score: 45, status: "GİRDİ" },
+          { name: "Zeynep Duru Kara", score: 95, status: "GİRDİ" },
+          { name: "İkra Öztürk", score: 85, status: "GİRDİ" },
+          { name: "Sultan Budaktekin", score: 45, status: "GİRDİ" },
+          { name: "Miraç Tazefidan", score: 75, status: "GİRDİ" },
+          { name: "Harun Talha Duyar", score: 80, status: "GİRDİ" },
+          { name: "Zeynep Akpınar", score: 90, status: "GİRDİ" }
+        ]
+      },
+      exam2: {
+        title: "6-10. Üniteler Revizyon Denemesi",
+        date: "Yakında Yapılacak",
+        active: false,
+        students: []
+      },
+      exam3: {
+        title: "1-10. Üniteler Genel Revizyon Denemesi",
+        date: "Yakında Yapılacak",
+        active: false,
+        students: []
+      }
+    };
+
+    // Helper: Turkish Case-Insensitive Normalization
+    function normalizeTr(text) {
+      if (!text) return '';
+      return text
+        .toLocaleLowerCase('tr-TR')
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c')
+        .trim();
+    }
+
+    // Helper: Get Feedback Config based on score
+    function getFeedback(score, rank) {
+      if (score === null || score === undefined) {
+        return {
+          title: "EXAM MISSED",
+          subtitle: "Sınava Katılmadı",
+          badgeColor: "bg-slate-700 text-slate-300 border-slate-600",
+          icon: "fa-circle-xmark",
+          desc: "Bu sınava katılım sağlanamamıştır."
+        };
+      }
+
+      if (rank === 1) {
+        return {
+          title: "PERFECT! OUTSTANDING!",
+          subtitle: "1. LİK DERECESİ VE ŞAMPİYONLUK! 🥇",
+          badgeColor: "bg-amber-400/20 text-amber-300 border-amber-400/50",
+          icon: "fa-crown",
+          desc: "Mükemmel performans! Sınıf 1.'si olarak olağanüstü bir başarı elde ettin. Tebrikler! 🎉"
+        };
+      }
+      if (rank === 2) {
+        return {
+          title: "AMAZING! FANTASTIC!",
+          subtitle: "2. LİK DERECESİ! 🥈",
+          badgeColor: "bg-slate-300/20 text-slate-200 border-slate-300/50",
+          icon: "fa-award",
+          desc: "Harika iş çıkardın! Sınıf 2.'si oldun. Başarılarının devamını dileriz! 👏"
+        };
+      }
+      if (rank === 3) {
+        return {
+          title: "GREAT WORK! EXCELLENT!",
+          subtitle: "3. LÜK DERECESİ! 🥉",
+          badgeColor: "bg-amber-700/30 text-amber-200 border-amber-600/50",
+          icon: "fa-medal",
+          desc: "Tebrikler! Kürsüye çıkarak sınıf 3.'sü olma başarısı gösterdin! ⭐"
+        };
+      }
+
+      if (score >= 80) {
+        return {
+          title: "GREAT JOB!",
+          subtitle: "Çok Başarılı Puan!",
+          badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/50",
+          icon: "fa-star",
+          desc: "Harika bir çalışma! Yüksek bir puan aldın, hedefe çok yakınsın."
+        };
+      } else if (score >= 60) {
+        return {
+          title: "NICE! KEEP IT UP!",
+          subtitle: "İyi Performans!",
+          badgeColor: "bg-blue-500/20 text-blue-300 border-blue-500/50",
+          icon: "fa-thumbs-up",
+          desc: "Güzel sonuç! Biraz daha pratikle bir sonraki sınavda dereceye girebilirsin."
+        };
+      } else if (score >= 50) {
+        return {
+          title: "GOOD TRY!",
+          subtitle: "Geliştirilebilir Puan",
+          badgeColor: "bg-indigo-500/20 text-indigo-300 border-indigo-500/50",
+          icon: "fa-book-open",
+          desc: "Fena değil! Eksik olduğun konuları gözden geçirerek puanını artırabilirsin."
+        };
+      } else {
+        return {
+          title: "KEEP PRACTICING!",
+          subtitle: "Çalışmaya Devam Et! 📚",
+          badgeColor: "bg-rose-500/20 text-rose-300 border-rose-500/50",
+          icon: "fa-bolt",
+          desc: "Asla vazgeçme! Ünite kelimelerini ve gramer konularını tekrar ederek daha güçlü döneceksin."
+        };
+      }
+    }
+
+    // Process Rank Calculations
+    function getProcessedExamData(examKey) {
+      const exam = EXAMS_DATA[examKey];
+      if (!exam || !exam.active || !exam.students.length) return { exam, rankedStudents: [] };
+
+      // Filter and sort students who participated
+      const participated = exam.students
+        .filter(s => s.status === "GİRDİ" && s.score !== null)
+        .sort((a, b) => b.score - a.score);
+
+      const missed = exam.students.filter(s => s.status === "GİRMEDİ" || s.score === null);
+
+      // Assign dense ranks
+      let currentRank = 1;
+      let prevScore = null;
+      let rankedParticipated = [];
+
+      participated.forEach((st) => {
+        if (prevScore !== null && st.score < prevScore) {
+          currentRank++;
+        }
+        prevScore = st.score;
+        rankedParticipated.push({
+          ...st,
+          rank: currentRank
+        });
+      });
+
+      const allProcessed = [
+        ...rankedParticipated,
+        ...missed.map(s => ({ ...s, rank: null }))
+      ];
+
+      return { exam, rankedStudents: allProcessed };
+    }
+
+    // Trigger Confetti effect for Top 3
+    function launchConfetti() {
+      if (typeof confetti === 'function') {
+        const count = 200;
+        const defaults = { origin: { y: 0.7 } };
+
+        function fire(particleRatio, opts) {
+          confetti({
+            ...defaults,
+            ...opts,
+            particleCount: Math.floor(count * particleRatio)
+          });
+        }
+
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
+      }
+    }
+
+    // Auto-complete Search handling
+    function handleInputChange() {
+      const inputVal = document.getElementById("studentInput").value;
+      const suggestionsBox = document.getElementById("suggestionsBox");
+      const currentExamKey = document.getElementById("examSelect").value;
+      const { rankedStudents } = getProcessedExamData(currentExamKey);
+
+      if (!inputVal.trim() || !rankedStudents.length) {
+        suggestionsBox.classList.add("hidden");
+        return;
+      }
+
+      const q = normalizeTr(inputVal);
+      const matches = rankedStudents.filter(s => normalizeTr(s.name).includes(q));
+
+      if (matches.length === 0) {
+        suggestionsBox.innerHTML = `
+          <div class="px-4 py-3 text-slate-400 text-sm italic text-center">
+            Öğrenci bulunamadı
+          </div>`;
+      } else {
+        suggestionsBox.innerHTML = matches.map(s => `
+          <div 
+            onclick="selectStudent('${s.name.replace(/'/g, "\\'")}')" 
+            class="px-4 py-3 cursor-pointer hover:bg-slate-800/80 transition-colors flex items-center justify-between text-sm">
+            <span class="font-medium text-slate-200">${s.name}</span>
+            <span class="text-xs text-slate-400">${s.status === 'GİRMEDİ' ? 'Girmedi' : s.score + ' Puan'}</span>
+          </div>
+        `).join('');
+      }
+
+      suggestionsBox.classList.remove("hidden");
+    }
+
+    function selectStudent(name) {
+      document.getElementById("studentInput").value = name;
+      document.getElementById("suggestionsBox").classList.add("hidden");
+      calculateResult();
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter') {
+        document.getElementById("suggestionsBox").classList.add("hidden");
+        calculateResult();
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById("studentInput").value = "";
+      document.getElementById("suggestionsBox").classList.add("hidden");
+      resetResultView();
+    }
+
+    function resetResultView() {
+      const resCard = document.getElementById("resultCard");
+      const podiumSection = document.getElementById("podiumSection");
+      resCard.classList.add("hidden");
+      resCard.innerHTML = "";
+      podiumSection.classList.add("hidden");
+    }
+
+    function showPodiumDirectly() {
+      renderPodiumAndLeaderboard();
+      const podiumSection = document.getElementById("podiumSection");
+      podiumSection.classList.remove("hidden");
+      podiumSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Calculate & Display Result + Show Podium
+    function calculateResult() {
+      const studentInput = document.getElementById("studentInput").value.trim();
+      const examKey = document.getElementById("examSelect").value;
+      const resCard = document.getElementById("resultCard");
+      const podiumSection = document.getElementById("podiumSection");
+
+      if (!studentInput) {
+        resCard.classList.remove("hidden");
+        resCard.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 border-rose-500/30 text-rose-300 text-center flex items-center justify-center gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            <span>Lütfen bir öğrenci adı giriniz veya listeden seçiniz.</span>
+          </div>`;
+        podiumSection.classList.add("hidden");
+        return;
+      }
+
+      const { exam, rankedStudents } = getProcessedExamData(examKey);
+
+      if (!exam.active) {
+        resCard.classList.remove("hidden");
+        resCard.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 border-amber-500/30 text-amber-300 text-center space-y-2">
+            <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 text-amber-400"></i>
+            <h3 class="font-bold text-lg">Bu Sınav Henüz Açıklanmadı</h3>
+            <p class="text-xs text-slate-400">Seçilen deneme sınavı henüz gerçekleşmedi veya sonuçları yüklenmedi.</p>
+          </div>`;
+        podiumSection.classList.add("hidden");
+        return;
+      }
+
+      // Search student matching
+      const targetQuery = normalizeTr(studentInput);
+      const student = rankedStudents.find(s => normalizeTr(s.name) === targetQuery) ||
+                      rankedStudents.find(s => normalizeTr(s.name).includes(targetQuery));
+
+      if (!student) {
+        resCard.classList.remove("hidden");
+        resCard.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 border-rose-500/30 text-rose-300 text-center space-y-2">
+            <i class="fa-solid fa-user-slash text-2xl text-rose-400"></i>
+            <p class="font-semibold">"${studentInput}" isimli öğrenci bu sınav listesinde bulunamadı.</p>
+            <p class="text-xs text-slate-400">Lütfen adı ve soyadı doğru yazdığınızdan emin olunuz.</p>
+          </div>`;
+        podiumSection.classList.add("hidden");
+        return;
+      }
+
+      const feedback = getFeedback(student.score, student.rank);
+      const isTop3 = student.rank && student.rank <= 3;
+
+      if (isTop3) {
+        launchConfetti();
+        playCelebrationSound();
+      }
+
+      // Render Result Card UI
+      resCard.innerHTML = `
+        <div class="glass-card rounded-3xl p-6 md:p-8 shadow-2xl border ${isTop3 ? 'border-amber-400/60 shadow-amber-500/20' : 'border-slate-700'} relative overflow-hidden animate-fade-in-up">
+          
+          ${isTop3 ? `<div class="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-amber-600 text-slate-950 font-black text-[10px] md:text-xs uppercase px-4 py-1.5 rounded-bl-xl shadow-md flex items-center gap-1.5">
+            <i class="fa-solid fa-trophy"></i> DERECE YAPTI
+          </div>` : ''}
+
+          <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            
+            <!-- Left Info -->
+            <div class="text-center md:text-left space-y-3">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${feedback.badgeColor} border">
+                <i class="fa-solid ${feedback.icon}"></i>
+                <span>${feedback.subtitle}</span>
+              </div>
+
+              <h2 class="text-2xl md:text-4xl font-extrabold text-white tracking-tight">
+                ${student.name}
+              </h2>
+
+              <p class="text-amber-400 font-black text-xl md:text-2xl tracking-wide uppercase">
+                "${feedback.title}"
+              </p>
+
+              <p class="text-slate-300 text-sm max-w-md">
+                ${feedback.desc}
+              </p>
+
+              <div class="pt-2 text-xs text-slate-400 flex items-center justify-center md:justify-start gap-4">
+                <span><i class="fa-solid fa-file-lines text-amber-400 mr-1"></i> ${exam.title}</span>
+                <span><i class="fa-regular fa-calendar-check text-amber-400 mr-1"></i> ${exam.date}</span>
+              </div>
+            </div>
+
+            <!-- Right Score Badge -->
+            <div class="flex flex-col items-center justify-center bg-slate-900/90 rounded-2xl p-6 border border-slate-700/80 min-w-[170px] shadow-inner text-center">
+              <span class="text-xs uppercase font-bold text-slate-400 tracking-wider mb-1">Sınav Puanı</span>
+              <div class="text-4xl md:text-5xl font-black ${student.score !== null ? 'bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 bg-clip-text text-transparent' : 'text-slate-500'}">
+                ${student.score !== null ? student.score : '—'}
+              </div>
+              
+              <div class="mt-3 pt-3 border-t border-slate-800 w-full text-center">
+                <span class="text-[11px] text-slate-400 block">Sınıf Derecesi</span>
+                <span class="text-sm font-bold ${student.rank ? 'text-amber-300' : 'text-slate-500'}">
+                  ${student.rank ? `#${student.rank} . Sırada` : 'Derece Yok'}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+
+      resCard.classList.remove("hidden");
+
+      // Render & Reveal Podium after search!
+      renderPodiumAndLeaderboard();
+      podiumSection.classList.remove("hidden");
+
+      // Smooth scroll into result view
+      resCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Render Podium Visual
+    function renderPodiumAndLeaderboard() {
+      const examKey = document.getElementById("examSelect").value;
+      const { exam, rankedStudents } = getProcessedExamData(examKey);
+
+      const podiumContainer = document.getElementById("podiumContainer");
+      const leaderboardBody = document.getElementById("leaderboardBody");
+
+      if (!exam.active || !rankedStudents.length) {
+        podiumContainer.innerHTML = `
+          <div class="text-center py-12 text-slate-400 text-sm">
+            <i class="fa-solid fa-hourglass-start text-3xl mb-3 text-slate-500 block"></i>
+            Bu sınav için henüz derece verileri bulunmamaktadır.
+          </div>`;
+        leaderboardBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-500">Veri bulunamadı</td></tr>`;
+        return;
+      }
+
+      // Extract Top Ranks
+      const firsts = rankedStudents.filter(s => s.rank === 1);
+      const seconds = rankedStudents.filter(s => s.rank === 2);
+      const thirds = rankedStudents.filter(s => s.rank === 3);
+
+      podiumContainer.innerHTML = `
+        <!-- 2nd Place Step -->
+        <div class="podium-step flex-1 flex flex-col items-center">
+          <div class="text-center mb-2">
+            <i class="fa-solid fa-medal text-slate-300 text-2xl md:text-3xl mb-1"></i>
+            <div class="text-[11px] md:text-xs font-bold text-slate-200">
+              ${seconds.map(s => s.name).join('<br>') || '—'}
+            </div>
+            <span class="text-[10px] text-amber-300 font-semibold">${seconds[0] ? seconds[0].score + ' Puan' : ''}</span>
+          </div>
+          <div class="w-full bg-gradient-to-t from-slate-700 to-slate-500 rounded-t-2xl h-28 md:h-36 flex items-center justify-center border-t-2 border-slate-300 shadow-lg">
+            <span class="text-2xl md:text-4xl font-extrabold text-slate-950 opacity-80">2nd</span>
+          </div>
+        </div>
+
+        <!-- 1st Place Step -->
+        <div class="podium-step flex-1 flex flex-col items-center">
+          <div class="text-center mb-2 animate-float">
+            <i class="fa-solid fa-crown text-amber-400 text-3xl md:text-4xl mb-1 filter drop-shadow"></i>
+            <div class="text-xs md:text-sm font-extrabold text-amber-200">
+              ${firsts.map(s => s.name).join('<br>') || '—'}
+            </div>
+            <span class="text-[11px] text-amber-300 font-bold">${firsts[0] ? firsts[0].score + ' Puan' : ''}</span>
+          </div>
+          <div class="w-full bg-gradient-to-t from-amber-600 via-amber-500 to-amber-400 rounded-t-2xl h-36 md:h-48 flex items-center justify-center border-t-2 border-amber-200 shadow-2xl shadow-amber-500/20">
+            <span class="text-3xl md:text-5xl font-black text-slate-950">1st</span>
+          </div>
+        </div>
+
+        <!-- 3rd Place Step -->
+        <div class="podium-step flex-1 flex flex-col items-center">
+          <div class="text-center mb-2">
+            <i class="fa-solid fa-award text-amber-700 text-2xl md:text-3xl mb-1"></i>
+            <div class="text-[11px] md:text-xs font-bold text-amber-100">
+              ${thirds.map(s => s.name).join('<br>') || '—'}
+            </div>
+            <span class="text-[10px] text-amber-300 font-semibold">${thirds[0] ? thirds[0].score + ' Puan' : ''}</span>
+          </div>
+          <div class="w-full bg-gradient-to-t from-amber-900 to-amber-700 rounded-t-2xl h-20 md:h-28 flex items-center justify-center border-t-2 border-amber-600 shadow-lg">
+            <span class="text-2xl md:text-4xl font-extrabold text-slate-950 opacity-80">3rd</span>
+          </div>
+        </div>
+      `;
+
+      // Render Full Leaderboard Rows
+      leaderboardBody.innerHTML = rankedStudents.map((st) => {
+        let badge = '';
+        if (st.rank === 1) badge = '<span class="text-amber-400 font-bold"><i class="fa-solid fa-crown mr-1"></i>1. Şampiyon</span>';
+        else if (st.rank === 2) badge = '<span class="text-slate-300 font-bold"><i class="fa-solid fa-medal mr-1"></i>2. Derece</span>';
+        else if (st.rank === 3) badge = '<span class="text-amber-600 font-bold"><i class="fa-solid fa-award mr-1"></i>3. Derece</span>';
+        else if (st.status === 'GİRMEDİ') badge = '<span class="text-slate-500 italic">Sınava Katılmadı</span>';
+        else badge = `<span class="text-slate-400">${st.rank}. Sıra</span>`;
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition-colors ${st.rank && st.rank <= 3 ? 'bg-amber-500/5' : ''}">
+            <td class="py-3 px-4 font-bold text-slate-400">${st.rank ? '#' + st.rank : '-'}</td>
+            <td class="py-3 px-4 font-semibold text-slate-200">${st.name}</td>
+            <td class="py-3 px-4 text-center font-bold ${st.score !== null ? 'text-amber-300' : 'text-slate-600'}">
+              ${st.score !== null ? st.score : '—'}
+            </td>
+            <td class="py-3 px-4 text-right">${badge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleFullList() {
+      const fullList = document.getElementById("fullLeaderboard");
+      const btn = document.getElementById("toggleListBtn");
+      
+      if (fullList.classList.contains("hidden")) {
+        fullList.classList.remove("hidden");
+        btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> <span>Listeyi Gizle</span>`;
+      } else {
+        fullList.classList.add("hidden");
+        btn.innerHTML = `<i class="fa-solid fa-list-ol"></i> <span>Tüm Sınıf Listesini Göster</span>`;
+      }
+    }
+
+    // Close suggestions dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const suggestionsBox = document.getElementById("suggestionsBox");
+      const studentInput = document.getElementById("studentInput");
+      if (!suggestionsBox.contains(e.target) && e.target !== studentInput) {
+        suggestionsBox.classList.add("hidden");
+      }
+    });
+  </script>
+</body>
+</html>
+
