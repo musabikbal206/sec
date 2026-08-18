@@ -81,7 +81,7 @@
       Sınav Sonuç Öğrenme Portalı
     </h1>
     <p class="text-slate-400 mt-2 text-sm md:text-base max-w-xl mx-auto">
-      Adınızı yazarak sınav sonucunuzu, sınıf derecenizi ve İngilizce dönütünüzü öğrenebilirsiniz.
+      Adınızı yazıp insan doğrulama adımını tamamlayarak sonucunuzu öğrenebilirsiniz.
     </p>
   </header>
 
@@ -118,22 +118,39 @@
             <input 
               type="text" 
               id="studentInput" 
-              placeholder="Örn: Ahmet Demir, Ayşe Kaya" 
+              placeholder="Ad ve soyadınızı giriniz..." 
               autocomplete="off"
-              oninput="handleInputChange()"
               onkeydown="handleKeyDown(event)"
               class="w-full bg-slate-900/80 border border-slate-700/80 text-slate-100 rounded-xl px-4 py-3.5 pl-11 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all font-medium text-sm md:text-base placeholder-slate-500"
             />
             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          </div>
+        </div>
 
-            <!-- Autocomplete Suggestions Dropdown -->
-            <div id="suggestionsBox" class="hidden absolute z-30 left-0 right-0 mt-2 bg-slate-900/95 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto divide-y divide-slate-800">
+        <!-- 3. Human Verification (Captcha) -->
+        <div class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-4">
+          <label class="block text-xs md:text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wider">
+            <i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>İnsan Doğrulaması
+          </label>
+          <div class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-3 text-amber-300 font-extrabold text-lg tracking-wider flex items-center justify-center gap-2 min-w-[130px] shadow-inner">
+              <span id="captchaQuestion">? + ? = ?</span>
+              <button onclick="generateCaptcha()" title="Yeni Soru Üret" class="text-xs text-amber-400 hover:text-amber-200 ml-1">
+                <i class="fa-solid fa-rotate"></i>
+              </button>
             </div>
+            <input 
+              type="number" 
+              id="captchaInput" 
+              placeholder="İşlem sonucunu giriniz" 
+              onkeydown="handleKeyDown(event)"
+              class="w-full sm:flex-1 bg-slate-900/80 border border-slate-700/80 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all font-semibold text-sm md:text-base placeholder-slate-500"
+            />
           </div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <div class="flex gap-3 pt-2">
           <button 
             onclick="calculateResult()" 
             class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-[0.98] flex items-center justify-center gap-2 text-base">
@@ -141,13 +158,6 @@
             Sonucu Öğren
           </button>
 
-          <button 
-            onclick="showPodiumDirectly()" 
-            class="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl transition-all border border-slate-700/80 text-sm font-semibold flex items-center justify-center gap-2">
-            <i class="fa-solid fa-trophy text-amber-400"></i>
-            <span>Derece Kürsüsünü Göster</span>
-          </button>
-          
           <button 
             onclick="clearSearch()" 
             title="Temizle"
@@ -164,7 +174,7 @@
       <!-- Dynamic container inside JS -->
     </div>
 
-    <!-- Podium & Leaderboard Section (Initially Hidden - Revealed after searching) -->
+    <!-- Podium & Leaderboard Section (Initially Hidden - Revealed only AFTER valid search) -->
     <div id="podiumSection" class="hidden glass-card rounded-3xl p-6 md:p-8 shadow-2xl space-y-8 animate-fade-in-up">
       
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/60 pb-5">
@@ -224,6 +234,17 @@
 
   <!-- Sound Effects Synthesis using Web Audio API -->
   <script>
+    let captchaNum1 = 0;
+    let captchaNum2 = 0;
+
+    // Generate random math captcha question
+    function generateCaptcha() {
+      captchaNum1 = Math.floor(Math.random() * 9) + 1;
+      captchaNum2 = Math.floor(Math.random() * 9) + 1;
+      document.getElementById("captchaQuestion").textContent = `${captchaNum1} + ${captchaNum2} = ?`;
+      document.getElementById("captchaInput").value = "";
+    }
+
     function playCelebrationSound() {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -280,7 +301,7 @@
           { name: "Muhammed İsa Karaarslan", score: 55, status: "GİRDİ" },
           { name: "Muhammed Sehab Avcı", score: 60, status: "GİRDİ" },
           { name: "Ömer Talha Güllü", score: null, status: "GİRMEDİ" },
-          { name: "Recep Talha Yalçın", score: 55, status: "GİRDİ" }, // Doğru puan: 55
+          { name: "Recep Talha Yalçın", score: 55, status: "GİRDİ" },
           { name: "Sare Esma Subaşı", score: 75, status: "GİRDİ" },
           { name: "Sudenaz Koca", score: null, status: "GİRMEDİ" },
           { name: "Sümeyye Nur Bayındır", score: 30, status: "GİRDİ" },
@@ -457,57 +478,17 @@
       }
     }
 
-    // Auto-complete Search handling
-    function handleInputChange() {
-      const inputVal = document.getElementById("studentInput").value;
-      const suggestionsBox = document.getElementById("suggestionsBox");
-      const currentExamKey = document.getElementById("examSelect").value;
-      const { rankedStudents } = getProcessedExamData(currentExamKey);
-
-      if (!inputVal.trim() || !rankedStudents.length) {
-        suggestionsBox.classList.add("hidden");
-        return;
-      }
-
-      const q = normalizeTr(inputVal);
-      const matches = rankedStudents.filter(s => normalizeTr(s.name).includes(q));
-
-      if (matches.length === 0) {
-        suggestionsBox.innerHTML = `
-          <div class="px-4 py-3 text-slate-400 text-sm italic text-center">
-            Öğrenci bulunamadı
-          </div>`;
-      } else {
-        suggestionsBox.innerHTML = matches.map(s => `
-          <div 
-            onclick="selectStudent('${s.name.replace(/'/g, "\\'")}')" 
-            class="px-4 py-3 cursor-pointer hover:bg-slate-800/80 transition-colors flex items-center justify-between text-sm">
-            <span class="font-medium text-slate-200">${s.name}</span>
-            <span class="text-xs text-slate-400">${s.status === 'GİRMEDİ' ? 'Girmedi' : s.score + ' Puan'}</span>
-          </div>
-        `).join('');
-      }
-
-      suggestionsBox.classList.remove("hidden");
-    }
-
-    function selectStudent(name) {
-      document.getElementById("studentInput").value = name;
-      document.getElementById("suggestionsBox").classList.add("hidden");
-      calculateResult();
-    }
-
     function handleKeyDown(e) {
       if (e.key === 'Enter') {
-        document.getElementById("suggestionsBox").classList.add("hidden");
         calculateResult();
       }
     }
 
     function clearSearch() {
       document.getElementById("studentInput").value = "";
-      document.getElementById("suggestionsBox").classList.add("hidden");
+      document.getElementById("captchaInput").value = "";
       resetResultView();
+      generateCaptcha();
     }
 
     function resetResultView() {
@@ -518,28 +499,38 @@
       podiumSection.classList.add("hidden");
     }
 
-    function showPodiumDirectly() {
-      renderPodiumAndLeaderboard();
-      const podiumSection = document.getElementById("podiumSection");
-      podiumSection.classList.remove("hidden");
-      podiumSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    // Calculate & Display Result + Show Podium
+    // Calculate & Display Result + Show Podium (Only on successful query & verification)
     function calculateResult() {
       const studentInput = document.getElementById("studentInput").value.trim();
+      const captchaInputValue = document.getElementById("captchaInput").value.trim();
       const examKey = document.getElementById("examSelect").value;
       const resCard = document.getElementById("resultCard");
       const podiumSection = document.getElementById("podiumSection");
 
+      // 1. Check Student Input
       if (!studentInput) {
         resCard.classList.remove("hidden");
         resCard.innerHTML = `
           <div class="glass-card rounded-2xl p-6 border-rose-500/30 text-rose-300 text-center flex items-center justify-center gap-3">
             <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-            <span>Lütfen bir öğrenci adı giriniz veya listeden seçiniz.</span>
+            <span>Lütfen bir öğrenci adı ve soyadı giriniz.</span>
           </div>`;
         podiumSection.classList.add("hidden");
+        return;
+      }
+
+      // 2. Check Human Verification (Captcha)
+      const expectedAnswer = captchaNum1 + captchaNum2;
+      if (!captchaInputValue || parseInt(captchaInputValue, 10) !== expectedAnswer) {
+        resCard.classList.remove("hidden");
+        resCard.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 border-rose-500/40 bg-rose-950/30 text-rose-300 text-center space-y-2 animate-fade-in-up">
+            <i class="fa-solid fa-shield-xmark text-3xl text-rose-400"></i>
+            <h3 class="font-bold text-base">İnsan Doğrulaması Hatalı!</h3>
+            <p class="text-xs text-slate-300">Lütfen toplama işleminin sonucunu doğru giriniz.</p>
+          </div>`;
+        podiumSection.classList.add("hidden");
+        generateCaptcha(); // Refresh question
         return;
       }
 
@@ -568,9 +559,10 @@
           <div class="glass-card rounded-2xl p-6 border-rose-500/30 text-rose-300 text-center space-y-2">
             <i class="fa-solid fa-user-slash text-2xl text-rose-400"></i>
             <p class="font-semibold">"${studentInput}" isimli öğrenci bu sınav listesinde bulunamadı.</p>
-            <p class="text-xs text-slate-400">Lütfen adı ve soyadı doğru yazdığınızdan emin olunuz.</p>
+            <p class="text-xs text-slate-400">Lütfen adı ve soyadı tam ve doğru yazdığınızdan emin olunuz.</p>
           </div>`;
         podiumSection.classList.add("hidden");
+        generateCaptcha();
         return;
       }
 
@@ -638,9 +630,12 @@
 
       resCard.classList.remove("hidden");
 
-      // Render & Reveal Podium after search!
+      // Render & Reveal Podium ONLY AFTER successful search and verification!
       renderPodiumAndLeaderboard();
       podiumSection.classList.remove("hidden");
+
+      // Generate new captcha for next query
+      generateCaptcha();
 
       // Smooth scroll into result view
       resCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -748,14 +743,10 @@
       }
     }
 
-    // Close suggestions dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      const suggestionsBox = document.getElementById("suggestionsBox");
-      const studentInput = document.getElementById("studentInput");
-      if (!suggestionsBox.contains(e.target) && e.target !== studentInput) {
-        suggestionsBox.classList.add("hidden");
-      }
-    });
+    // Initialize Captcha on page load
+    window.onload = function() {
+      generateCaptcha();
+    };
   </script>
 </body>
 </html>
